@@ -17,7 +17,7 @@ build-type:          Simple
 extra-source-files:  CHANGELOG.md
 
 executable fake-news
-  main-is:             Main.hs
+  main-is:             fakenews.hs
   -- other-modules:
   -- other-extensions:
   build-depends:       base >=4.13 && <4.14
@@ -28,6 +28,6 @@ executable decisiontree-test
   main-is:             decisiontree.hs
   -- other-modules:
   -- other-extensions:
-  build-depends:       containers, base >=4.13 && <4.14
+  build-depends:       vector, containers, base >=4.13 && <4.14
   -- hs-source-dirs:
   default-language:    Haskell2010

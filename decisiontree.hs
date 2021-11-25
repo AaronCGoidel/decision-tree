@@ -1,28 +1,46 @@
-import qualified Data.Map (Map, empty, fromList, insert, lookup, size)
+import qualified Data.Map (Map, empty, fromList, insert, lookup, size, toList, traverseWithKey)
+import qualified Data.Vector (Vector, empty, fromList, (!))
 
 data DTree = Internal String Float [DTree] | Leaf Float
     deriving (Show, Eq)
 
-type Dictionary = Data.Map.Map String Int
-
-data CountVectorizer = CountVectorizer Dictionary [Int]
+data Pair = Pair Int Int
     deriving (Show, Eq)
 
-addToVectorizer :: CountVectorizer -> String -> CountVectorizer
-addToVectorizer (CountVectorizer dict counts) word = case Data.Map.lookup word dict of
-    Nothing ->
-        -- add word to dictionary with value of the length of counts
-        CountVectorizer (Data.Map.insert word (length counts) dict) (counts ++ [1])
-    Just pos ->
-        -- increment the value of counts at pos
-        CountVectorizer dict (take pos counts ++ [counts !! pos + 1] ++ drop (pos + 1) counts)
+type Dictionary = Data.Map.Map String Int
+type CountMap = Data.Map.Map String Int
+type CountVector = Data.Vector.Vector Int
 
-vectorize :: [String] -> CountVectorizer
-vectorize = foldl addToVectorizer (CountVectorizer Data.Map.empty [])
+data CountVectorizer = CountVectorizer Dictionary CountVector
+    deriving (Show, Eq)
+
+buildCountMap :: [String] -> CountMap
+buildCountMap =
+    foldl
+        ( \wordMap word -> case Data.Map.lookup word wordMap of
+            Just count -> Data.Map.insert word (count + 1) wordMap
+            Nothing -> Data.Map.insert word 1 wordMap
+        )
+        Data.Map.empty
+
+fitVectorizer :: CountMap -> CountVectorizer
+fitVectorizer countmap =
+    let cmap = Data.Map.toList countmap
+        num_words = Data.Map.size countmap
+        (dict, counts) =
+            foldl
+                ( \(dict, counts) (word, count) ->
+                    ( Data.Map.insert word (num_words - (length counts) - 1) dict
+                    , count : counts
+                    )
+                )
+                (Data.Map.empty, [])
+                cmap
+     in CountVectorizer dict (Data.Vector.fromList counts)
 
 -- takes a list of sentences and returns a list of words
 flatten :: [String] -> [String]
-flatten sentences = foldr ((++) . words) [] sentences
+flatten = foldr ((++) . words) []
 
 main :: IO ()
 main = do
@@ -34,22 +52,24 @@ main = do
     let fake_words = flatten fake
     let real_words = flatten real
 
-    let fake_vectorizer = vectorize fake_words
-    putStrLn "vectorized fake"
-    let real_vectorizer = vectorize real_words
-    putStrLn "vectorized real"
+    let fake_count_map = buildCountMap fake_words
+    let real_count_map = buildCountMap real_words
+
+    let fake_vectorizer = fitVectorizer fake_count_map
+    let real_vectorizer = fitVectorizer real_count_map
 
     let (CountVectorizer fake_dict fake_counts) = fake_vectorizer
     let (CountVectorizer real_dict real_counts) = real_vectorizer
 
+    print "h"
     putStrLn
-        ( case (Data.Map.lookup "trump" fake_dict) of
+        ( case Data.Map.lookup "trump" fake_dict of
             Nothing -> "Trump not found in FAKE"
-            Just pos -> show (fake_counts !! pos)
+            Just pos -> show $ fake_counts Data.Vector.! pos
         )
 
     putStrLn
-        ( case (Data.Map.lookup "trump" real_dict) of
+        ( case Data.Map.lookup "trump" real_dict of
             Nothing -> "Trump not found in REAL"
-            Just pos -> show (real_counts !! pos)
+            Just pos -> show $ real_counts Data.Vector.! pos
         )
