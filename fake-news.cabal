@@ -33,8 +33,24 @@ library count-vectorizer
   default-language:    Haskell2010
 
 executable decisiontree-test
-  main-is:             src/decisiontree.hs
+  main-is:             src/DecisionTree.hs
   -- other-extensions:
-  build-depends:       vector, containers, base >=4.13 && <4.14, count-vectorizer
+  build-depends:       vector, containers, base >=4.13 && <4.14, count-vectorizer, random
+  -- hs-source-dirs:
+  ghc-options:
+    -O2
+    -threaded
+  default-language:    Haskell2010
+
+executable decisiontree-profile
+  main-is:             src/DecisionTree.hs
+  -- other-extensions:
+  ghc-options:
+    -O2
+    -threaded
+    -fprof-auto
+    -prof
+    "-with-rtsopts=-N -p -s -h -i0.1"
+  build-depends:       vector, containers, base >=4.13 && <4.14, count-vectorizer, random
   -- hs-source-dirs:
   default-language:    Haskell2010

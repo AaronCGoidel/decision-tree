@@ -1,4 +1,4 @@
-module CountVectorizer (flatten, fitVectorizer, encode) where
+module CountVectorizer (CountVectorizer, printer, lookUp, flatten, fitVectorizer, encode) where
 
 import qualified Data.Map (Map, empty, fromList, insert, lookup, size, toList, traverseWithKey, (!))
 import qualified Data.Vector (Vector, empty, fromList, replicate, update, (!))
@@ -9,6 +9,14 @@ type CountVector = Data.Vector.Vector Int
 
 data CountVectorizer = CountVectorizer Dictionary CountVector Int
     deriving (Show, Eq)
+
+printer :: CountVectorizer -> Dictionary
+printer (CountVectorizer d _ _) = d
+
+lookUp :: Int -> CountVectorizer -> String 
+lookUp i (CountVectorizer dic _ _) = case Data.Map.lookup i dic of
+    Just s -> s
+    Nothing -> error $ show i
 
 buildCountMap :: [String] -> CountMap
 buildCountMap =
@@ -44,8 +52,8 @@ indexToCount index dict countMap =
                 Nothing -> 0
         Nothing -> 0
 
-encode :: [String] -> CountVectorizer -> CountVector
-encode text vectorizer = Data.Vector.fromList (encodeHelper (buildCountMap text) vectorizer [] 0)
+encode :: String -> CountVectorizer -> CountVector
+encode text vectorizer = Data.Vector.fromList (encodeHelper (buildCountMap (words text)) vectorizer [] 0)
 
 encodeHelper :: CountMap -> CountVectorizer -> [Int] -> Int -> [Int]
 encodeHelper cmap (CountVectorizer dict counts num_words) encoded index =
